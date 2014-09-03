@@ -1,3 +1,7 @@
+#include <Adafruit_GFX.h>
+
+#include <PCD8544.h>
+
 /*
  * PCD8544 - Interface with Philips PCD8544 (or compatible) LCDs.
  *
@@ -41,25 +45,25 @@
 
 
 #include <PCD8544.h>
-//#include "Waveforms.h"
+//FM #include "Waveforms.h"
 #include "arduino.h"
 
 
 // A custom glyph (a smiley)...
 static const byte glyph[] = { B00010000, B00110100, B00110000, B00110100, B00010000 };
-int led = 13;
+int Arduino_led = 13;
 
-int backlight = 11;
-int brightness = 0;    // how bright the LED is
-int fadeAmount = 5;    // how many points to fade the LED by
-
+//NOKIA 5110 LCD module with PCD8544 chip set
 static PCD8544 lcd;
+int backlight = 10;    // Digital pin 11 control backlight from LCD, using 8bit PWM for bright control
+int brightness = 0;    // how bright the LED is [0 254]
+int fadeAmount = 5;    // how many points to fade the LED by
 
 
 void setup() {
   pinMode(backlight, OUTPUT);
     
-  pinMode(led, OUTPUT);
+  pinMode(Arduino_led, OUTPUT);
   // PCD8544-compatible displays may have a different resolution...
   lcd.begin(84, 48);
   
@@ -72,10 +76,10 @@ void loop() {
   // Just to show the program is alive...
   static int counter = 0;
 
-  /*digitalWrite(led, HIGH);
+  /*digitalWrite(Arduino_led, HIGH);
   delay(1000);
-  digitalWrite(led, LOW);
-*/
+  digitalWrite(Arduino_led, LOW);
+  */
   // Write a piece of text on the first line...
   lcd.setCursor(0, 0);
   lcd.print("Hello, World!");
@@ -86,9 +90,8 @@ void loop() {
   lcd.write(' ');
   lcd.write(0);  // write the smiley
 
-  delay(30);  
-  counter++;
-
+  
+  // Set PWM value on for backlight. 
   analogWrite(backlight, brightness);
   // change the brightness for next time through the loop:
   brightness = brightness + fadeAmount;
@@ -96,6 +99,10 @@ void loop() {
   if (brightness == 0 || brightness == 255) {
     fadeAmount = -fadeAmount ;
   }
+  
+  // Delay in each cycle
+  delay(30);  
+  counter++;
 }
 
 
