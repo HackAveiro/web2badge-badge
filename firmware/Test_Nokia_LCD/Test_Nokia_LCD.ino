@@ -51,7 +51,7 @@
 
 // A custom glyph (a smiley)...
 static const byte glyph[] = { B00010000, B00110100, B00110000, B00110100, B00010000 };
-int Arduino_led = 13;
+int Arduino_led = 13;      //Digital pin
 
 //NOKIA 5110 LCD module with PCD8544 chip set
 static PCD8544 lcd;
@@ -90,7 +90,8 @@ void loop() {
   lcd.write(' ');
   lcd.write(0);  // write the smiley
 
-  
+digitalWrite(Arduino_led, LOW);
+/*  
   // Set PWM value on for backlight. 
   analogWrite(backlight, brightness);
   // change the brightness for next time through the loop:
@@ -99,7 +100,7 @@ void loop() {
   if (brightness == 0 || brightness == 255) {
     fadeAmount = -fadeAmount ;
   }
-  
+*/  
   // Delay in each cycle
   delay(30);  
   counter++;
