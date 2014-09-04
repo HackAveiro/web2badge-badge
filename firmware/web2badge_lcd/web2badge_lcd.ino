@@ -30,6 +30,10 @@ Adafruit_PCD8544 display = Adafruit_PCD8544(4, 5, 6);
 //#define BLIGHT 10 
 
 
+
+int blkrate = 50; //defines the blinking speed of the backlight
+int bkbright = 140; //defines backlight
+
 int serial_putc( char c, FILE * ) 
 {
   Serial.write( c );
@@ -63,10 +67,10 @@ const uint64_t pipes[2] = { 0xF0F0F0F0E1LL, 0xF0F0F0F0D2LL };
 void setup() {
   
   pinMode(3, OUTPUT); //backlight setup
-  analogWrite(3, 140);
+  analogWrite(3, bkbright);
   
   display.begin(); //display iniT
-  display.setContrast(50);
+  display.setContrast(300);
 
   display.display();
   delay(1500);
@@ -75,10 +79,10 @@ void setup() {
   display.setCursor(0,0);
   display.setTextColor(WHITE);
   //void setTextColor(uint16_t color, uint16_t backgroundcolor);
-  display.setTextSize(1);
+  display.setTextSize(1.5);
   display.setTextWrap(true);
   display.println("TESTE");
-  display.print("done setup()");
+  //display.print("done setup()");
   display.display();
   delay(2000);
   
@@ -114,9 +118,22 @@ void setup() {
   radio.printDetails();
   Serial.println("done setup()");
   #endif
-  
+  display.print("done setup()");
+  display.display();
 }
 
+void bckBlink(){  // blinks Background when badge receives new message
+
+    analogWrite(3, 255);
+    delay(blkrate);
+    analogWrite(3, 5);
+    delay(blkrate);
+    analogWrite(3, 200);
+    delay(blkrate);
+    analogWrite(3, 140);
+    delay(blkrate);
+   
+}
 void loop() {
   
 //  radio.stopListening();
@@ -127,7 +144,7 @@ void loop() {
   delay(250); //give sometime to reply back with command
   
   if ( radio.available() ) {
-    Serial.println("Radio disponivel");
+    Serial.println("Radio disponivel"); //Debug
     uint8_t len;
     char c[128];
     bool done = false;
@@ -138,9 +155,37 @@ void loop() {
         done = radio.read(&c, len);
         c[len] = NULL; // para terminar a string no fim do array lido
         PRINTLN (c);
+        bckBlink();
         display.clearDisplay();
+        bckBlink();
+        
+        tone(10, 440);
+        delay(200);
+        bckBlink();
+        noTone(10);
+        
         display.print (c);
         display.display();
+        
+        tone(10, 880);
+        delay(200);
+        noTone(10);
+        tone(10, 335, 800);
+        delay(300);
+        bckBlink();
+        noTone(10);
+        
+        tone(10, 1000, 1000);
+        
+        delay(500);
+        bckBlink();
+        noTone(10);
+        bckBlink();
+        
+        //display.print (c);
+        //display.display();
+        //bckBlink();
+        
       } else {
         PRINTLN("Error receiving GHCommandPacket");
         done =true;
@@ -149,5 +194,8 @@ void loop() {
     }
 
   }
+//      display.clearDisplay();     //TODO : implement time out counter to leave this message in case of long wait
 
+//      display.print ("tweet me!!!!");
+//      display.display();
 }
