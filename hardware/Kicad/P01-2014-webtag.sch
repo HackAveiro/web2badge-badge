@@ -140,8 +140,6 @@ F 3 "" H 6550 2600 60  0000 C CNN
 $EndComp
 Text Notes 6650 4600 0    60   ~ 0
 This should be PWMed to\n save power/control \nbacklight brightness
-Text Notes 7950 4100 0    60   ~ 0
-pwm brightness \ncontrol option
 $Comp
 L CONN_4X2 P?
 U 1 1 53F69AEC
@@ -210,16 +208,6 @@ Wire Wire Line
 	6850 2300 6250 2300
 Wire Wire Line
 	6650 1350 6650 1500
-Wire Wire Line
-	5050 2700 4850 2700
-Wire Wire Line
-	4850 2700 4850 3250
-Wire Wire Line
-	4850 3250 8200 3250
-Wire Wire Line
-	8200 3250 8200 4000
-Wire Wire Line
-	8200 4000 7900 4000
 Wire Wire Line
 	3300 3250 3300 3100
 Wire Wire Line
