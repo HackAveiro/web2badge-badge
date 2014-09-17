@@ -16,11 +16,12 @@
 ////                                                  ////
 ////                                                  ////
 //////////////////////////////////////////////////////////
-//#include <Narcoleptic.h>
+
 
 #include <EEPROM.h>
 
 #define RADIO
+#define LCD
 ///ID vars
 char id[2] = {'D','G'}; //DG = Diogo Gomes
 int addr = 0; //address of the EEPROM where ID is stored
@@ -36,24 +37,26 @@ Adafruit_PCD8544 display = Adafruit_PCD8544(4, 5, 6);
 ///lcd vars
 int bkpin = 3;           //Backlight pin
 int blkrate = 50;        //defines the blinking speed of the backlight
-int lcdctr = 60;         // lcd contrat
-int bkbright = 140;      //defines backlight brightness
+int lcdctr = 50;         // lcd contrat
+int bkbright= 255;      //defines backlight brightness
 #endif
 
 #ifdef RADIO
 #include "nRF24L01.h"
 #include "RF24.h"
 
+
 // Set up nRF24L01 radio on SPI bus plus pins 9 & 10
-RF24 radio(9,10);// CE - CS
+RF24 radio(7,8);// CE - CS 
 // Radio pipe addresses for the 2 nodes to communicate.
 const uint64_t pipes[2] = { 0xF0F0F0F0E1LL, 0xF0F0F0F0D2LL };
 #endif
 
 #define DEBUG
+
 #ifdef DEBUG
-#define PRINT(X) Serial.print(X)
-#define PRINTLN(X) Serial.println(X)
+#define PRINT(X) Serial.print(X);
+#define PRINTLN(X) Serial.println(X);
 #else
 #define PRINT(X)
 #define PRINTLN(X)
@@ -85,14 +88,16 @@ void setID(char *newid){
 
 void setup_radio() {
 #ifdef RADIO
+       pinMode(10,OUTPUT);
 	radio.begin();
+        //delay(250); //test
 	// enable dynamic payloads
 	radio.enableDynamicPayloads();
 	// optionally, increase the delay between retries & # of retries
-	radio.setRetries(15,15);
+	radio.setRetries(5,5);
 	radio.setAutoAck(false);
 	radio.setDataRate(RF24_250KBPS);
-	//radio.setChannel(1); //
+	
 	radio.setPALevel(RF24_PA_MIN);//
 
 	radio.openWritingPipe(pipes[1]);
@@ -114,9 +119,9 @@ void setup_lcd() {
 	display.setContrast(lcdctr);
 	display.clearDisplay(); //clears buffer
 	display.setCursor(0,0);
-	display.setTextColor(WHITE);
+	display.setTextColor(0xffff);
 	//void setTextColor(uint16_t color, uint16_t backgroundcolor);
-	display.setTextSize(1.5);
+	display.setTextSize(1);
 	display.setTextWrap(true);
 	display.println("TESTE");
 	//display.print("done setup()");
@@ -173,25 +178,46 @@ void bckBlink(){  // blinks Background when badge receives new message
 	#endif
 }
 
+char lcd_buf[84];
+int lcd_i = 0;
+
 void printDisplay(char *c) {
+        
+        if(strlen(c) > 84-lcd_i) {
+          lcd_i = 0;
+          memset(lcd_buf,0,84);
+        }
+        strncpy(&lcd_buf[lcd_i], c, strlen(c));
+        lcd_i+=strlen(c);
 	#ifdef LCD
-	display.print (c);
-	display.display();
+	display.print(lcd_buf);
 	#else
-	Serial.print(c);
+	Serial.print(lcd_buf);
 	#endif
+        display.display();
+}
+
+void printClean() {
+        lcd_i = 0;
+        memset(lcd_buf,0,84);
+        #ifdef LCD
+	display.print(lcd_buf);
+	#endif
+        display.display();
 }
 
 void setBackLight(int val) {
 
 }
 
-void setContrast(int val) {
+void set_Contrast(int val) {
 
 }
 
 void checkCMD(char* arrCMD){
-		if(arrCMD[0] == '+' && arrCMD[1] == '+') {
+                if(strlen(arrCMD) == 2)
+                  printClean();
+                else if(arrCMD[0] == '+' && arrCMD[1] == '+') {
 			PRINTLN("Command mode");
 			switch(arrCMD[2]) {
 				case 'I':
@@ -210,18 +236,23 @@ void checkCMD(char* arrCMD){
 				case 'C':
 					PRINT("Set Contrast: ");
 					PRINTLN(&arrCMD[3]);
-					setContrast(atoi(&arrCMD[3]));
+					set_Contrast(atoi(&arrCMD[3]));
 					break;
+                                case 'X':
+                                        printClean();
+                                        break;
 			}
 
 		} else if(arrCMD[0] == id[0] && arrCMD[1] == id[1]) {
 			PRINTLN("Message for ME!");
 			printDisplay(&arrCMD[2]);
+
 		} else if(arrCMD[0] == '*' && arrCMD[1] == '*') {
 			PRINTLN("Message for EVERYONE!");
 			printDisplay(&arrCMD[2]);
+ 
 		} else {
-			Serial.println("Invalid Command ID or unidentified message");
+			//Serial.println("Invalid Command ID or unidentified message");
 		}
 
 }
@@ -232,7 +263,8 @@ void checkCMD(char* arrCMD){
 
 void loop() {
   #ifdef RADIO
-		//  radio.stopListening();
+	
+	        //  radio.stopListening();
 		//  char *c = "A";
 		//  radio.write(c, 1);
 		//  radio.startListening();
@@ -240,18 +272,19 @@ void loop() {
 		//give sometime to reply back with command
 
 		if ( radio.available() ) {
-				Serial.println("Radio disponivel"); //Debug
+		//Serial.println("Radio disponivel"); //Debug
 				uint8_t len;
 				char c[128];
 				bool done = false;
 				while (!done) {
 						// Fetch the payload, and see if this was the last one.
 						len = radio.getDynamicPayloadSize();
+                                                Serial.println(len);
 						if(len < 128) {
 								done = radio.read(&c, len);
+                                                                
 								c[len] = NULL; // para terminar a string no fim do array lido
 
-								PRINTLN (c);
 								checkCMD(c);
 
 								bckBlink();
@@ -278,7 +311,7 @@ void loop() {
 								bckBlink();
 
 								delay(250);
-								//sCmd.readArray(c);
+								
 
 								//        display.print (c);
 								//        display.display();
