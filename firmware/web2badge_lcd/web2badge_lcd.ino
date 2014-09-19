@@ -207,11 +207,13 @@ void printClean() {
 }
 
 void setBackLight(int val) {
+    analogWrite(bkpin, val);
+  
 
 }
 
 void set_Contrast(int val) {
-
+    display.setContrast(val);
 }
 
 void checkCMD(char* arrCMD){
