@@ -23,7 +23,7 @@
 #define RADIO
 #define LCD
 ///ID vars
-char id[2] = {'D','G'}; //DG = Diogo Gomes
+char id[2] = {'F  ','M'}; //DG = Diogo Gomes
 int addr = 0; //address of the EEPROM where ID is stored
 
 #include <SPI.h>
@@ -38,7 +38,7 @@ Adafruit_PCD8544 display = Adafruit_PCD8544(4, 5, 6);
 int bkpin = 3;           //Backlight pin
 int blkrate = 50;        //defines the blinking speed of the backlight
 int lcdctr = 50;         // lcd contrat
-int bkbright= 255;      //defines backlight brightness
+int bkbright= 15;    //defines backlight brightness
 #endif
 
 #ifdef RADIO
@@ -46,8 +46,8 @@ int bkbright= 255;      //defines backlight brightness
 #include "RF24.h"
 
 
-// Set up nRF24L01 radio on SPI bus plus pins 9 & 10
-RF24 radio(7,8);// CE - CS 
+// Set up nRF24L01 radio on SPI bus plus pins 9 & 10 -> 7-8
+RF24 radio(9,10);// CE - CS 
 // Radio pipe addresses for the 2 nodes to communicate.
 const uint64_t pipes[2] = { 0xF0F0F0F0E1LL, 0xF0F0F0F0D2LL };
 #endif
@@ -182,7 +182,7 @@ char lcd_buf[84];
 int lcd_i = 0;
 
 void printDisplay(char *c) {
-        
+        printClean();
         if(strlen(c) > 84-lcd_i) {
           lcd_i = 0;
           memset(lcd_buf,0,84);
@@ -190,14 +190,18 @@ void printDisplay(char *c) {
         strncpy(&lcd_buf[lcd_i], c, strlen(c));
         lcd_i+=strlen(c);
 	#ifdef LCD
+        bckBlink();
 	display.print(lcd_buf);
+        bckBlink();
 	#else
+        
 	Serial.print(lcd_buf);
 	#endif
         display.display();
 }
 
 void printClean() {
+        display.clearDisplay();
         lcd_i = 0;
         memset(lcd_buf,0,84);
         #ifdef LCD
@@ -230,21 +234,38 @@ void checkCMD(char* arrCMD){
 					id[1] = arrCMD[4];
                                         setID(id);
 					break;
+//				case 'B':
+//					PRINT("Set Backlight: ");
+//					PRINTLN(&arrCMD[3]);
+//					setBackLight(atoi(&arrCMD[3]));
+//					break;
+//				case 'C':
+//					PRINT("Set Contrast: ");
+//					PRINTLN(&arrCMD[3]);
+//					set_Contrast(atoi(&arrCMD[3]));
+//					break;
+                                case 'X':
+                                        printClean();
+                                        break;
+                      }
+                        if (arrCMD[2] == id[0] && arrCMD[3] == id[0]) {
+                          switch(arrCMD[4]) {              
+                              
 				case 'B':
 					PRINT("Set Backlight: ");
-					PRINTLN(&arrCMD[3]);
-					setBackLight(atoi(&arrCMD[3]));
+					PRINTLN(&arrCMD[5]);
+					setBackLight(atoi(&arrCMD[5]));
 					break;
 				case 'C':
 					PRINT("Set Contrast: ");
-					PRINTLN(&arrCMD[3]);
-					set_Contrast(atoi(&arrCMD[3]));
+					PRINTLN(&arrCMD[5]);
+					set_Contrast(atoi(&arrCMD[5]));
 					break;
                                 case 'X':
                                         printClean();
                                         break;
 			}
-
+                      }
 		} else if(arrCMD[0] == id[0] && arrCMD[1] == id[1]) {
 			PRINTLN("Message for ME!");
 			printDisplay(&arrCMD[2]);
@@ -288,16 +309,18 @@ void loop() {
 								c[len] = NULL; // para terminar a string no fim do array lido
 
 								checkCMD(c);
+                                                                display.clearDisplay();
 
-								bckBlink();
+								//bckBlink();
 								#ifdef LCD
-								display.clearDisplay();
+							//	display.clearDisplay();
+
 								#endif
-								bckBlink();
+								//bckBlink();
 
 								//tone(10, 440);
 								//delay(200);
-								bckBlink();
+								//bckBlink();
 								//noTone(10);
 
 
@@ -310,7 +333,7 @@ void loop() {
 								//        tone(10, 1000, 1000);
 								//        delay(500);
 								//        noTone(10);
-								bckBlink();
+								//bckBlink();
 
 								delay(250);
 								
